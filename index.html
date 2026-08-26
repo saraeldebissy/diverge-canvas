@@ -357,6 +357,16 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 .inp::placeholder{ color:var(--ink-4); }
 .inp:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-8); }
 
+/* Native <select> arrows render inconsistently against custom padding —
+   drop the browser's own and center a fixed one ourselves instead of
+   fighting its vertical alignment. */
+.select-wrap{ position:relative; }
+.select-wrap select.inp{ appearance:none; -webkit-appearance:none; padding-right:30px; cursor:pointer; }
+.select-arrow{
+  position:absolute; top:50%; right:11px; transform:translateY(-50%);
+  display:flex; color:var(--ink-3); pointer-events:none;
+}
+
 .seg{ display:flex; gap:2px; padding:3px; border-radius:var(--r-sm); background:var(--paper-deep); }
 .seg button{
   flex:1; height:26px; border-radius:var(--r-xs);
@@ -1293,6 +1303,24 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     copy:       ["lowpress", "direct", "explain"]
   };
 
+  /* Concept and copy aren't locked to the one direction/concept they were
+     first authored under — explore either from any eligible node, in any
+     order. The row offsets are just the original hand-placed layout
+     (one column over, spread ±280 around the parent), reapplied relative
+     to whichever parent you actually branched from. */
+  const COL_STEP = 380;
+  const CONCEPT_ROW_OFFSET = { confidence: 0, needs: -280, control: 280 };
+  const COPY_ROW_OFFSET    = { lowpress: 280, direct: -280, explain: 0 };
+
+  function reparentGroup(ids, rowOffset, parentId) {
+    const p = N[parentId];
+    ids.forEach((id) => {
+      N[id].parent = parentId;
+      N[id].x = p.x + COL_STEP;
+      N[id].y = p.y + rowOffset[id];
+    });
+  }
+
   const PATH = ["root", "guided", "confidence", "lowpress"];
 
   const STEPS = [
@@ -1334,7 +1362,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     problem: "Users struggle to confidently choose the right plan.",
     persona: "Price-aware frequent user who values convenience and transparency.",
     goal:    "Increase confident paid-plan selection without pressure.",
-    constraints: ["Maximum 3 plans", "Pricing must stay visible", "No dark patterns"],
+    constraints: ["Maximum 3 plans", "Pricing must stay visible"],
     designSystem: DESIGN_SYSTEMS[0]
   };
 
@@ -1381,7 +1409,8 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     check:   '<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2.6 6.9 5.2 9.5l5.2-5.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     x:       '<svg width="9" height="9" viewBox="0 0 9 9"><path d="M1.6 1.6 7.4 7.4M7.4 1.6 1.6 7.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>',
     code:    '<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M4.2 3 1.6 5.5 4.2 8M6.8 3l2.6 2.5-2.6 2.5" stroke="currentColor" stroke-width=".9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    figma:   '<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="1.4" y="1.4" width="8.2" height="2.9" rx="1" stroke="currentColor" stroke-width=".9"/><rect x="1.4" y="6.7" width="8.2" height="2.9" rx="1" stroke="currentColor" stroke-width=".9"/></svg>'
+    figma:   '<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="1.4" y="1.4" width="8.2" height="2.9" rx="1" stroke="currentColor" stroke-width=".9"/><rect x="1.4" y="6.7" width="8.2" height="2.9" rx="1" stroke="currentColor" stroke-width=".9"/></svg>',
+    chevron: '<svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
 
   /* ==========================================================
@@ -1636,11 +1665,14 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
   function designSystemHTML() {
     return `
-      <select class="inp" id="fDesignSystem" data-form-select="designSystem" aria-label="Design system">
-        ${DESIGN_SYSTEMS.map((d) =>
-          `<option value="${esc(d)}"${d === state.form.designSystem ? " selected" : ""}>${esc(d)}</option>`
-        ).join("")}
-      </select>`;
+      <div class="select-wrap">
+        <select class="inp" id="fDesignSystem" data-form-select="designSystem" aria-label="Design system">
+          ${DESIGN_SYSTEMS.map((d) =>
+            `<option value="${esc(d)}"${d === state.form.designSystem ? " selected" : ""}>${esc(d)}</option>`
+          ).join("")}
+        </select>
+        <span class="select-arrow">${ICON.chevron}</span>
+      </div>`;
   }
 
   function renderContext() {
@@ -1704,7 +1736,8 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     if (!state.contextSet) {
       ctxEl.innerHTML = `
         <div class="blank">
-          <p>Diverge turns one screen into several directions, concepts and copy — each with the reasoning behind it. Place a screen to begin; we'll draft a starting problem, persona and goal from it.</p>
+          <p>Place a screen or a component to begin. Diverge helps you most when you give it context — the persona, the problem, the goal, and which dimension you want to explore.</p>
+          <p>This is a working prototype: follow the highlighted glow for what's fully wired here; everything else is standing in for the idea.</p>
           <span class="barline m"></span><span class="barline s"></span><span class="barline m"></span>
         </div>`;
       return;
@@ -1954,12 +1987,19 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   /* The explore actions (concept/layout/copy, or the root's "start")
      live in the floating canvas menu now, not the reasoning panel — see
      renderNodeMenu. */
+  /* Only "Explore layout" is a stub — it's not wired to real content in
+     this prototype, and says so out front rather than pretending to work.
+     Concept and copy generate for real from any eligible node, in any
+     order: nothing here requires the scripted path. Advancing the guided
+     tour, though, only happens when a click matches what the tour is
+     actually pointing at — free exploration elsewhere shouldn't drag the
+     coaching target along with it. */
   nodemenuEl.addEventListener("click", (e) => {
     const act = e.target.closest("[data-act]");
     if (!act || act.disabled) return;
     const a = act.dataset.act;
-    if (a !== "start" && !act.classList.contains("live")) {
-      showToast("Not part of this walkthrough yet");
+    if (a === "layout") {
+      showToast("Explore layout is a stub in this prototype — concept and copy are fully wired.");
       return;
     }
     const countEl = nodemenuEl.querySelector("#exploreCount");
@@ -1974,12 +2014,19 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       generate("directions", exploreLabel("direction", count, prompt), GROUPS.directions.slice(0, count), count);
       return;
     }
-    state.spent.add(act.dataset.node + ":" + a);
-    advance();
+
+    const nodeId = act.dataset.node;
+    const t = STEPS[state.step] && STEPS[state.step].on;
+    const onScript = t && t.type === "act" && t.node === nodeId && t.act === a;
+
+    state.spent.add(nodeId + ":" + a);
+    if (onScript) advance();
     if (a === "concept") {
-      generate("concepts", exploreLabel("concept", count, prompt), ["guided", ...GROUPS.concepts.slice(0, count)], count);
+      reparentGroup(GROUPS.concepts, CONCEPT_ROW_OFFSET, nodeId);
+      generate("concepts", exploreLabel("concept", count, prompt), [nodeId, ...GROUPS.concepts.slice(0, count)], count);
     } else if (a === "copy") {
-      generate("copy", exploreLabel("copy variant", count, prompt), ["confidence", ...GROUPS.copy.slice(0, count)], count);
+      reparentGroup(GROUPS.copy, COPY_ROW_OFFSET, nodeId);
+      generate("copy", exploreLabel("copy variant", count, prompt), [nodeId, ...GROUPS.copy.slice(0, count)], count);
     }
   });
 
