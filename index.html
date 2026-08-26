@@ -415,10 +415,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 .reject-form textarea:focus{ border-color:var(--accent-40); }
 .reject-form-row{ display:flex; justify-content:flex-end; gap:8px; }
 
-/* Branch actions used to float under the selected node on the canvas;
-   they live here now, so the reasoning and the next move sit together. */
-.reason-actions{ display:flex; flex-direction:column; gap:9px; padding-bottom:15px; border-bottom:1px solid var(--line-2); }
-.reason-actions.flash .act-list{ animation:flashring .9s var(--e-quart); }
 @keyframes flashring{
   0%{ box-shadow:0 0 0 0 var(--accent-40); }
   40%{ box-shadow:0 0 0 4px var(--accent-24); }
@@ -751,6 +747,31 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 .node-btn .tip{ margin-bottom:26px; }
 .layer .tip{ transform:scale(calc(1 / var(--z,1))); animation:none; }
 
+/* The next-step menu floats beside the selected node on the canvas —
+   what to do next sits next to the thing it acts on, not in a side
+   panel. It's positioned in the node's own coordinate space (see
+   renderNodeMenu) so panning/zooming carries it along for free, and
+   counter-scaled like the other canvas chrome so it stays a comfortable,
+   legible size at any zoom level instead of shrinking with the graph. */
+.nodemenu{
+  position:absolute; top:0; left:0; width:240px;
+  transform-origin:0 0; transform:scale(calc(1 / var(--z,1)));
+  display:flex; flex-direction:column; gap:10px;
+  padding:14px;
+  background:var(--surface); border:1px solid var(--line-2); border-radius:var(--r-lg);
+  box-shadow:var(--shadow-3);
+  animation:nodemenuIn .22s var(--e-quart) both;
+  z-index:7;
+}
+/* Counter-scaled like .node's own selection furniture (see .handles),
+   so it can't reuse the .node "pop" keyframe: that animation's own
+   end-state sets transform:none, which would win over (and permanently
+   cancel) the static counter-scale above once the animation completes. */
+@keyframes nodemenuIn{ from{ opacity:0; } to{ opacity:1; } }
+.nodemenu .tip{ transform:none; }
+.nodemenu-label{ font-size:var(--t-micro); font-weight:var(--w-mid); letter-spacing:.09em; text-transform:uppercase; color:var(--ink-4); }
+.nodemenu-acts.flash .act-list{ animation:flashring .9s var(--e-quart); }
+
 /* ---- the 40px below a selected node --------------------------------
    Two things want that strip: the foot caption and the dimension badge
    (plus, on the finished path, the "ready" pill). Fixed at the cause
@@ -943,6 +964,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     <div class="layer" id="layer">
       <svg class="wires" id="wires" aria-hidden="true"></svg>
       <div id="nodes"></div>
+      <div id="nodemenu"></div>
     </div>
   </main>
 
@@ -1329,7 +1351,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
   const $ = (s) => document.querySelector(s);
   const app = $("#app"), canvas = $("#canvas"), layer = $("#layer"), wires = $("#wires");
-  const nodesEl = $("#nodes"), reason = $("#reason"), ctxEl = $("#ctx");
+  const nodesEl = $("#nodes"), reason = $("#reason"), ctxEl = $("#ctx"), nodemenuEl = $("#nodemenu");
   const status = $("#status"), sheet = $("#sheet"), exportBtn = $("#export");
   const panelR = document.querySelector(".panel-r"), toast = $("#toast");
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1401,9 +1423,9 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
         </div>` : ""}`;
   }
 
-  /* Branch actions used to float in a popup under the selected node; they
-     render into the reasoning panel now, so what-can-I-do-next sits next
-     to why-does-this-exist instead of overlapping the canvas. */
+  /* What-can-I-do-next floats beside the node it acts on (see
+     renderNodeMenu), not inside the reasoning panel — the panel is for
+     why-does-this-exist, the canvas is for what-happens-next. */
   function branchActionsHTML(id) {
     const n = N[id];
 
@@ -1411,15 +1433,15 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       if (state.step !== 2) return "";
       const tip = coachTip("act", "root", "start");
       return `
-        <div class="reason-actions">
-          <span class="label">Start here</span>
+        <div class="nodemenu-acts">
+          <span class="nodemenu-label">Start here</span>
+          ${exploreControlsHTML()}
           <div class="act-list">
             <button class="act live${tip ? " coach" : ""}" type="button" data-act="start" data-node="root">
               <span class="ico">${ICON.spark}</span>Start exploring
             </button>
           </div>
           ${tip ? `<div class="tip tip-flow">${tip}</div>` : ""}
-          ${exploreControlsHTML()}
         </div>`;
     }
     if (n.kind === "Copy") return "";
@@ -1430,7 +1452,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
     /* Every option reads as equally choosable — no greyed-out, padlocked
        rows. Only the live one is actually wired up for this walkthrough;
-       the others quietly say so if you try them (see the reason click
+       the others quietly say so if you try them (see the nodemenu click
        handler), rather than looking broken or off-limits. */
     const rows = ACTS.map((a) => {
       const spent = state.spent.has(id + ":" + a.id);
@@ -1445,12 +1467,23 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     }).join("");
 
     return `
-      <div class="reason-actions">
-        <span class="label">Diverge from this ${n.kind.toLowerCase()}</span>
+      <div class="nodemenu-acts">
+        <span class="nodemenu-label">Diverge from this ${n.kind.toLowerCase()}</span>
+        ${hasLive ? exploreControlsHTML() : ""}
         <div class="act-list">${rows}</div>
         ${liveTip ? `<div class="tip tip-flow">${liveTip}</div>` : ""}
-        ${hasLive ? exploreControlsHTML() : ""}
       </div>`;
+  }
+
+  /* Canvas-anchored, not panel-anchored: positioned in the same
+     coordinate space as the node cards (see the .node left/top styles
+     in render()) so it pans and zooms with the graph for free. */
+  function renderNodeMenu() {
+    const id = state.selected;
+    const body = id ? branchActionsHTML(id) : "";
+    if (!body) { nodemenuEl.innerHTML = ""; return; }
+    const n = N[id];
+    nodemenuEl.innerHTML = `<div class="nodemenu" style="left:${n.x + W + 20}px;top:${n.y}px">${body}</div>`;
   }
 
   function coachTip(kind, nodeId, actId) {
@@ -1530,7 +1563,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
     nodesEl.innerHTML = parts.join("");
 
-    renderWires(); renderContext(); renderReason(); renderRail(); renderTally();
+    renderWires(); renderContext(); renderReason(); renderNodeMenu(); renderRail(); renderTally();
   }
 
   function renderWires() {
@@ -1646,7 +1679,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     if (!n.r) {
       reason.innerHTML = `
         <div class="reason-title"><span class="kind">${n.kind}</span><h3>${n.name}</h3><span class="sub">${n.note}</span></div>
-        ${branchActionsHTML(id)}
         <div class="reason-list">
           <div class="reason-item"><span class="label">Held constant</span>
             <p>${state.context ? esc(state.context.constraints.join(" · ")) : "No constraints set yet."} Every branch inherits these.</p></div>
@@ -1658,7 +1690,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     reason.innerHTML = `
       <div class="reason-title"><span class="kind">${n.kind}</span><h3>${n.name}</h3><span class="sub">${n.foot}</span></div>
       ${optionActionsHTML(id)}
-      ${branchActionsHTML(id)}
       ${isCopy ? `<div class="quote-block">${n.copy}</div>` : ""}
       <div class="reason-list">
         <div class="reason-item"><span class="label">Why this ${isCopy ? "line" : "direction"} exists</span><p>${n.r.why}</p></div>
@@ -1820,11 +1851,8 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
     const diverge = e.target.closest("[data-diverge]");
     if (diverge) {
-      const sec = reason.querySelector(".reason-actions");
-      if (sec) {
-        sec.classList.remove("flash"); void sec.offsetWidth; sec.classList.add("flash");
-        sec.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
-      }
+      const sec = nodemenuEl.querySelector(".nodemenu-acts");
+      if (sec) { sec.classList.remove("flash"); void sec.offsetWidth; sec.classList.add("flash"); }
       return;
     }
 
@@ -1847,7 +1875,12 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
     const unreject = e.target.closest("[data-unreject]");
     if (unreject) { state.rejected.delete(unreject.dataset.unreject); render(); return; }
+  });
 
+  /* The explore actions (concept/layout/copy, or the root's "start")
+     live in the floating canvas menu now, not the reasoning panel — see
+     renderNodeMenu. */
+  nodemenuEl.addEventListener("click", (e) => {
     const act = e.target.closest("[data-act]");
     if (!act || act.disabled) return;
     const a = act.dataset.act;
@@ -1855,8 +1888,8 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       showToast("Not part of this walkthrough yet");
       return;
     }
-    const countEl = reason.querySelector("#exploreCount");
-    const promptEl = reason.querySelector("#explorePrompt");
+    const countEl = nodemenuEl.querySelector("#exploreCount");
+    const promptEl = nodemenuEl.querySelector("#explorePrompt");
     const count = Math.max(1, Math.min(3, parseInt(countEl && countEl.value, 10) || 3));
     const prompt = (promptEl && promptEl.value.trim()) || "";
     state.exploreCount = count;
@@ -1900,6 +1933,23 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     if (!state.done && s && s.on.type === "node" && s.on.node === id) advance();
     render();
     if (closesPath) fitTo(PATH);
+    nudgeForMenu();
+  }
+
+  /* Selecting a node can open both the reasoning panel and a canvas menu
+     beside it in the same tick — a corrective pan (not a re-fit/re-zoom)
+     for the case where the menu now lands partly behind whichever is on
+     its right (the panel, or the canvas edge). Runs after any fitTo()
+     above so it always has the settled view to check against. */
+  function nudgeForMenu() {
+    const menu = nodemenuEl.firstElementChild;
+    if (!menu) return;
+    const rect = menu.getBoundingClientRect();
+    const limit = panelR.classList.contains("collapsed")
+      ? canvas.getBoundingClientRect().right - 26
+      : panelR.getBoundingClientRect().left - 26;
+    const overshoot = rect.right - limit;
+    if (overshoot > 0) { state.view.x -= overshoot; applyView(true); }
   }
 
   nodesEl.addEventListener("click", (e) => {
