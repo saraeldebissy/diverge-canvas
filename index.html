@@ -195,22 +195,29 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 .steppill{
   position:absolute; left:50%; transform:translateX(-50%);
   display:flex; align-items:center; gap:11px;
-  height:34px; padding:0 14px;
+  min-height:34px; padding:8px 16px;
   border-radius:20px;
   background:var(--surface);
   border:1px solid var(--line);
   box-shadow:var(--shadow-2);
 }
-.ticks{ display:flex; gap:3px; }
+.ticks{ display:flex; gap:3px; flex:none; }
 .tick{ width:12px; height:3px; border-radius:2px; background:var(--paper-deep); transition:background .35s var(--e-quart); }
 .tick.done{ background:var(--accent-40); }
 .tick.now{ background:var(--accent); }
 .steplabel{
   font-size:var(--t-meta); letter-spacing:.02em;
-  color:var(--ink-3); white-space:nowrap;
+  color:var(--ink-3); white-space:nowrap; flex:none;
   font-variant-numeric:tabular-nums;
 }
 .steplabel b{ color:var(--ink); font-weight:var(--w-mid); }
+
+/* The one place coaching guidance lives now — next to the step it
+   belongs to, instead of a tip bubble floating next to whatever's live.
+   The live element still gets its own .coach glow; this just says what
+   it does and what happens next. */
+.stepdivider{ width:1px; align-self:stretch; background:var(--line-2); flex:none; }
+.stepguide{ font-size:var(--t-meta); color:var(--ink-2); line-height:1.4; max-width:340px; }
 
 .baractions{ margin-left:auto; display:flex; align-items:center; gap:8px; flex:none; }
 
@@ -294,6 +301,11 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   transition:background .16s var(--e-quart), border-color .16s var(--e-quart);
 }
 .field-edit:hover{ background:var(--surface-2); border-color:var(--line-2); cursor:text; }
+
+/* A question reads as an invitation to answer, not a category to scan —
+   sentence case, no tracking, a touch darker than the micro-labels so it
+   still sits above the answer without shouting it in tracked caps. */
+.field-q{ font-size:var(--t-meta); font-weight:var(--w-mid); color:var(--ink-3); line-height:1.35; }
 
 .chips{ display:flex; flex-wrap:wrap; gap:5px; }
 .chip{
@@ -673,6 +685,9 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   text-align:center; padding:16px;
 }
 .dropframe p{ margin:0; font-size:var(--t-meta); color:var(--ink-3); max-width:24ch; line-height:1.45; }
+.drop-actions{ display:flex; flex-direction:column; gap:8px; width:100%; max-width:190px; }
+.drop-actions .btn{ justify-content:center; }
+.drop-actions .btn .ico{ display:flex; flex:none; }
 
 .ghost .frame{ background:var(--surface); box-shadow:none; border:1px dashed var(--line-3); }
 .ghost .node-name{ color:var(--ink-4); }
@@ -728,37 +743,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   50%{ opacity:1; }
 }
 
-/* No step number here: the stepper at the top already owns the count, so
-   the tip only has to say what happens if you do this. */
-.tip{
-  position:absolute; bottom:100%; left:0; margin-bottom:11px;
-  width:max-content; max-width:224px;
-  padding:8px 13px;
-  border-radius:14px;
-  background:var(--ink); color:var(--surface-2);
-  font-size:var(--t-meta); font-weight:var(--w-body); letter-spacing:-.003em; line-height:1.4;
-  box-shadow:var(--shadow-2);
-  pointer-events:none; transform-origin:0 100%; z-index:20;
-  animation:tipin .4s var(--e-expo) both;
-}
-@keyframes tipin{ from{ opacity:0; transform:translateY(5px); } to{ opacity:1; transform:none; } }
-.tip::after{ content:""; position:absolute; top:100%; left:14px; border:5px solid transparent; border-top-color:var(--ink); border-bottom:0; }
-
-.tip-below{ bottom:auto; top:100%; margin:11px 0 0; left:auto; right:0; }
-.tip-below::after{ top:auto; bottom:100%; left:auto; right:14px; border-top:0; border-bottom:5px solid var(--ink); }
-
-/* Floating tips assume empty space to overlap — true on the canvas, false
-   in a content-dense panel. Here the tip joins the document flow instead,
-   so real controls underneath get pushed down rather than covered. */
-.tip-flow{ position:relative; inset:auto; bottom:auto; top:auto; left:auto; right:auto; margin:2px 0 0; max-width:none; width:auto; transform:none; }
-.tip-flow::after{ content:none; }
-
-/* A node's frame name is a sibling ABOVE the button the tip anchors to
-   (14px row + 6px gap). Clear it, or the tip covers the label the reviewer
-   needs in order to know what they are clicking. */
-.node-btn .tip{ margin-bottom:26px; }
-.layer .tip{ transform:scale(calc(1 / var(--z,1))); animation:none; }
-
 /* The next-step menu floats beside the selected node on the canvas —
    what to do next sits next to the thing it acts on, not in a side
    panel. It's positioned in the node's own coordinate space (see
@@ -780,7 +764,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
    end-state sets transform:none, which would win over (and permanently
    cancel) the static counter-scale above once the animation completes. */
 @keyframes nodemenuIn{ from{ opacity:0; } to{ opacity:1; } }
-.nodemenu .tip{ transform:none; }
 .nodemenu-label{ font-size:var(--t-micro); font-weight:var(--w-mid); letter-spacing:.09em; text-transform:uppercase; color:var(--ink-4); }
 .nodemenu-acts.flash .act-list{ animation:flashring .9s var(--e-quart); }
 
@@ -991,6 +974,8 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     <div class="steppill">
       <span class="ticks" id="ticks" aria-hidden="true"></span>
       <span class="steplabel" id="stepLabel"></span>
+      <span class="stepdivider" id="stepDivider"></span>
+      <span class="stepguide" id="stepGuide"></span>
     </div>
 
     <div class="baractions">
@@ -1191,7 +1176,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     root: {
       x: 0, y: 300, kind: "Screen", name: "Subscription pricing selector", icon: "screen",
       foot: "Three plans, equal weight", mock: "root",
-      note: "The screen every branch below is a response to. Nothing here has been changed yet."
+      note: "The screen or component every branch below is a response to. Nothing here has been changed yet."
     },
     guided: {
       x: 380, y: 20, parent: "root", kind: "Direction", name: "Guided choice", icon: "branch",
@@ -1309,15 +1294,15 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   const PATH = ["root", "guided", "confidence", "lowpress"];
 
   const STEPS = [
-    { label: "Place design",   on: { type: "act",  node: "root",       act: "place", below: true }, tip: "Add the screen you're solving for. Every direction below branches from it." },
-    { label: "Set context",    on: { type: "el",   el: "#setContext", below: true    },             tip: "Save the problem, persona and goal — directions get built against this, not the screen." },
+    { label: "Place design",   on: { type: "act",  node: "root",       act: "place" }, tip: "Add the screen or component you're solving for. Every direction below branches from it." },
+    { label: "Set context",    on: { type: "el",   el: "#setContext" },                              tip: "Save the problem, persona and goal — directions get built against this, not the screen." },
     { label: "Start",          on: { type: "act",  node: "root",       act: "start"   }, tip: "Generate three directions that solve this problem in meaningfully different ways." },
     { label: "Directions",     on: { type: "node", node: "guided"      },                tip: "Open a direction to read why it exists, its trade-off, and what still needs testing." },
     { label: "Branch concept", on: { type: "act",  node: "guided",     act: "concept" }, tip: "Split this direction into three concepts that keep its idea but vary the approach." },
     { label: "Inspect",        on: { type: "node", node: "confidence"  },                tip: "Open a concept to weigh its trade-offs before writing copy for it." },
     { label: "Copy variants",  on: { type: "act",  node: "confidence", act: "copy"    }, tip: "Write three copy variants for this concept, from direct to reassuring." },
     { label: "Select line",    on: { type: "node", node: "lowpress"    },                tip: "Select a line to lock in the path — screen, direction, concept and copy become one export." },
-    { label: "Export",         on: { type: "el",   el: "#export", below: true          }, tip: "Export the path you built as a rationale doc, ready to hand to a reviewer." }
+    { label: "Export",         on: { type: "el",   el: "#export" },                       tip: "Export the path you built as a rationale doc, ready to hand to a reviewer." }
   ];
 
   const ACTS = [
@@ -1332,16 +1317,29 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     Reimagine: "Challenge the constraints, not just the layout."
   };
 
+  /* Each field asks the question it answers, rather than naming itself —
+     "Problem" describes a category, "What are you solving for?" is
+     something you can just answer. */
+  const FIELD_LABELS = {
+    problem: "What are you solving for?",
+    persona: "Who are you solving for?",
+    goal:    "What does success look like?"
+  };
+
+  const DESIGN_SYSTEMS = ["shadcn/ui", "Material Design", "Human Interface Guidelines", "Ant Design", "None / custom"];
+
   const DEFAULTS = {
     problem: "Users struggle to confidently choose the right plan.",
     persona: "Price-aware frequent user who values convenience and transparency.",
     goal:    "Increase confident paid-plan selection without pressure.",
-    constraints: ["Maximum 3 plans", "Pricing must stay visible", "No dark patterns"]
+    constraints: ["Maximum 3 plans", "Pricing must stay visible", "No dark patterns"],
+    designSystem: DESIGN_SYSTEMS[0]
   };
 
   const state = {
     step: 0,
     placed: false,
+    analyzing: false,
     contextSet: false,
     editingField: null,
     form: { ...DEFAULTS, constraints: [...DEFAULTS.constraints] },
@@ -1444,24 +1442,23 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
     if (id === "root") {
       if (state.step !== 2) return "";
-      const tip = coachTip("act", "root", "start");
+      const live = !!coachTip("act", "root", "start");
       return `
         <div class="nodemenu-acts">
           <span class="nodemenu-label">Start here</span>
           ${exploreControlsHTML()}
           <div class="act-list">
-            <button class="act live${tip ? " coach" : ""}" type="button" data-act="start" data-node="root">
+            <button class="act live${live ? " coach" : ""}" type="button" data-act="start" data-node="root">
               <span class="ico">${ICON.spark}</span>Start exploring
             </button>
           </div>
-          ${tip ? `<div class="tip tip-flow">${tip}</div>` : ""}
         </div>`;
     }
     if (n.kind === "Copy") return "";
 
     const t = STEPS[state.step] && STEPS[state.step].on;
     const liveAct = t && t.type === "act" && t.node === id ? t.act : null;
-    let hasLive = false, liveTip = null;
+    let hasLive = false;
 
     /* Every option reads as equally choosable — no greyed-out, padlocked
        rows. Only the live one is actually wired up for this walkthrough;
@@ -1470,9 +1467,9 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     const rows = ACTS.map((a) => {
       const spent = state.spent.has(id + ":" + a.id);
       const live  = a.id === liveAct;
-      if (live) { hasLive = true; liveTip = coachTip("act", id, a.id); }
+      if (live) hasLive = true;
       const cls  = spent ? "act used" : live ? "act live" : "act";
-      return `<button class="${cls}${live && liveTip ? " coach" : ""}" type="button" data-act="${a.id}" data-node="${id}"
+      return `<button class="${cls}${live ? " coach" : ""}" type="button" data-act="${a.id}" data-node="${id}"
                 ${spent ? "disabled" : ""}>
                 <span class="ico">${spent ? ICON.check : ICON[a.id]}</span>${a.label}
                 ${spent ? `<span class="meta">Done</span>` : ""}
@@ -1484,7 +1481,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
         <span class="nodemenu-label">Diverge from this ${n.kind.toLowerCase()}</span>
         ${hasLive ? exploreControlsHTML() : ""}
         <div class="act-list">${rows}</div>
-        ${liveTip ? `<div class="tip tip-flow">${liveTip}</div>` : ""}
       </div>`;
   }
 
@@ -1508,8 +1504,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     return null;
   }
 
-  const tipHTML = (text, below) => `<span class="tip${below ? " tip-below" : ""}">${text}</span>`;
-
   function render() {
     const onPath = resolved();
     const parts = [];
@@ -1528,13 +1522,17 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
           <div class="node" style="left:${n.x}px;top:${n.y}px" data-node="placeholder">
             <div class="node-head"><span class="node-name">Untitled canvas</span></div>
             <div class="dropframe">
-              <p>Place the screen you want to explore.</p>
-              <button class="btn btn-primary${live ? " coach" : ""}" type="button" data-act="place" data-node="root">
-                <span style="display:flex">${ICON.place}</span>Add screen
-                ${live ? tipHTML(STEPS[0].tip, STEPS[0].on.below) : ""}
-              </button>
+              <p>Place the screen or component you want to explore.</p>
+              <div class="drop-actions">
+                <button class="btn btn-primary${live ? " coach" : ""}" type="button" data-act="place" data-node="root">
+                  <span class="ico">${ICON.place}</span>Browse
+                </button>
+                <button class="btn" type="button" data-act="figma-import" data-node="root">
+                  <span class="ico">${ICON.figma}</span>Import from Figma
+                </button>
+              </div>
             </div>
-            <div class="node-foot">PNG, Figma frame, or start blank</div>
+            <div class="node-foot">PNG or JPG</div>
           </div>`);
       }
     }
@@ -1567,7 +1565,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
               ${sel ? '<span class="handles"><i></i><i></i><i></i><i></i></span>' : ""}
             </div>
             ${sel ? '<span class="dimbadge">390 × 844</span>' : ""}
-            ${tip ? tipHTML(tip) : ""}
           </button>
           <div class="node-foot">${n.foot}</div>
           ${onPath && id === "lowpress" ? `<span class="ready">Direction ready to prototype</span>` : ""}
@@ -1605,7 +1602,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     const val = state.form[key];
     return `
       <div class="field">
-        <label class="label" for="f_${key}">${labelText}</label>
+        <label class="field-q" for="f_${key}">${labelText}</label>
         ${editing
           ? `<textarea class="inp" id="f_${key}" data-form="${key}" rows="2">${esc(val)}</textarea>`
           : `<button type="button" class="field-value field-edit" id="f_${key}" data-editfield="${key}">${esc(val) || "—"}</button>`}
@@ -1635,28 +1632,51 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       </div>`;
   }
 
+  function designSystemHTML() {
+    return `
+      <select class="inp" id="fDesignSystem" data-form-select="designSystem" aria-label="Design system">
+        ${DESIGN_SYSTEMS.map((d) =>
+          `<option value="${esc(d)}"${d === state.form.designSystem ? " selected" : ""}>${esc(d)}</option>`
+        ).join("")}
+      </select>`;
+  }
+
   function renderContext() {
     const head = $("#ctxHead"), stateChip = $("#ctxState");
+
+    /* A brief "reading" beat right after placement — the fields below
+       land pre-filled either way, but this is what makes that feel like
+       something Diverge just did, not boilerplate that was always there. */
+    if (state.analyzing) {
+      head.textContent = "Project context";
+      stateChip.textContent = "Analyzing…";
+      ctxEl.innerHTML = `
+        <div class="blank">
+          <p>Reading the screen — drafting a problem, persona and goal to start from…</p>
+          <span class="barline m"></span><span class="barline s"></span><span class="barline m"></span>
+        </div>`;
+      return;
+    }
 
     if (state.step === 1) {
       head.textContent = "Project context";
       stateChip.textContent = "Step 2";
       ctxEl.innerHTML = `
         <div class="setup-lede">
-          <h3>What are you solving?</h3>
-          <p>Diverge branches against this, not against the screen. Everything is editable and pre-filled, so you can walk straight through — and stays editable after, too.</p>
+          <h3>Drafted from your screen</h3>
+          <p>A starting point Diverge pulled from what you placed — check it, adjust anything, and it stays editable after, too.</p>
         </div>
         <div class="group">
           <div class="field">
-            <label class="label" for="fProblem">Problem</label>
+            <label class="field-q" for="fProblem">${FIELD_LABELS.problem}</label>
             <textarea class="inp" id="fProblem" data-form="problem" rows="2">${esc(state.form.problem)}</textarea>
           </div>
           <div class="field">
-            <label class="label" for="fPersona">Persona</label>
+            <label class="field-q" for="fPersona">${FIELD_LABELS.persona}</label>
             <textarea class="inp" id="fPersona" data-form="persona" rows="2">${esc(state.form.persona)}</textarea>
           </div>
           <div class="field">
-            <label class="label" for="fGoal">Goal</label>
+            <label class="field-q" for="fGoal">${FIELD_LABELS.goal}</label>
             <textarea class="inp" id="fGoal" data-form="goal" rows="2">${esc(state.form.goal)}</textarea>
           </div>
         </div>
@@ -1668,6 +1688,10 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
           <span class="label">Creative range</span>
           ${rangeHTML()}
         </div>
+        <div class="field">
+          <span class="label">Design system</span>
+          ${designSystemHTML()}
+        </div>
         <button class="btn btn-primary setup-go" id="setContext" type="button">Set context</button>`;
       return;
     }
@@ -1678,7 +1702,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     if (!state.contextSet) {
       ctxEl.innerHTML = `
         <div class="blank">
-          <p>Nothing to branch against yet. Place a screen, then say what you are solving.</p>
+          <p>Diverge turns one screen into several directions, concepts and copy — each with the reasoning behind it. Place a screen to begin; we'll draft a starting problem, persona and goal from it.</p>
           <span class="barline m"></span><span class="barline s"></span><span class="barline m"></span>
         </div>`;
       return;
@@ -1691,9 +1715,9 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       </div>
       <div class="rule"></div>
       <div class="group">
-        ${editableFieldHTML("problem", "Problem")}
-        ${editableFieldHTML("persona", "Persona")}
-        ${editableFieldHTML("goal", "Goal")}
+        ${editableFieldHTML("problem", FIELD_LABELS.problem)}
+        ${editableFieldHTML("persona", FIELD_LABELS.persona)}
+        ${editableFieldHTML("goal", FIELD_LABELS.goal)}
       </div>
       <div class="field">
         <span class="label">Constraints</span>
@@ -1702,6 +1726,10 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       <div class="field">
         <span class="label">Creative range</span>
         ${rangeHTML()}
+      </div>
+      <div class="field">
+        <span class="label">Design system</span>
+        ${designSystemHTML()}
       </div>`;
   }
 
@@ -1755,25 +1783,26 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   function renderElCoach() {
     for (const sel of EL_TARGETS) {
       const el = $(sel);
-      if (!el) continue;
-      el.classList.remove("coach");
-      const t = el.querySelector(".tip");
-      if (t) t.remove();
+      if (el) el.classList.remove("coach");
     }
     const s = STEPS[state.step];
     if (state.done || !s || s.on.type !== "el") return;
     const el = $(s.on.el);
-    if (!el) return;
-    el.classList.add("coach");
-    el.insertAdjacentHTML("beforeend", tipHTML(s.tip, s.on.below));
+    if (el) el.classList.add("coach");
   }
 
+  /* One guide, always in the same place next to the step counter, instead
+     of a tip bubble scattered next to whichever element is live. The
+     target itself still gets the .coach glow — this just says what it
+     does and what happens next. */
   function renderRail() {
     $("#ticks").innerHTML = STEPS.map((_, i) =>
       `<span class="tick ${state.done || i < state.step ? "done" : i === state.step ? "now" : ""}"></span>`).join("");
     $("#stepLabel").innerHTML = state.done
       ? `<b>Done</b> · direction selected`
       : `<b>${state.step + 1}</b>/${STEPS.length} · ${STEPS[state.step].label}`;
+    $("#stepGuide").textContent = state.done ? "" : STEPS[state.step].tip;
+    $("#stepDivider").style.display = state.done ? "none" : "";
     exportBtn.hidden = state.step < 8;
     renderElCoach();
   }
@@ -1997,6 +2026,10 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
   nodesEl.addEventListener("click", (e) => {
     const act = e.target.closest("[data-act]");
+    if (act && act.dataset.act === "figma-import") {
+      showToast("Not part of this walkthrough yet");
+      return;
+    }
     if (act && !act.disabled && act.dataset.act === "place") {
       if (state.busy) return;
       state.busy = true;
@@ -2004,10 +2037,22 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       $("#sGen").textContent = "Uploading screen…";
       render();
       setTimeout(() => {
+        /* Upload finishes, but the busy pill stays lit through a second,
+           shorter beat: reading the screen for a draft problem/persona/
+           goal before handing the form over (see renderContext's
+           state.analyzing branch). Advance only happens once that's done. */
         state.busy = false;
-        status.classList.remove("busy");
-        state.placed = true; state.shown.add("root"); advance();
+        state.placed = true; state.shown.add("root");
+        state.analyzing = true;
+        status.classList.add("busy");
+        $("#sGen").textContent = "Reading screen…";
         render(); fitTo(["root"]);
+        setTimeout(() => {
+          state.analyzing = false;
+          status.classList.remove("busy");
+          advance();
+          render();
+        }, reduce ? 60 : 1100);
       }, reduce ? 60 : 1300);
       return;
     }
@@ -2062,6 +2107,11 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     if (k && state.editingField === k) { state.editingField = null; render(); }
   });
 
+  ctxEl.addEventListener("change", (e) => {
+    const k = e.target.dataset && e.target.dataset.formSelect;
+    if (k) { state.form[k] = e.target.value; render(); }
+  });
+
   exportBtn.addEventListener("click", () => {
     if (state.step < 8) return;
     state.done = true;
@@ -2097,7 +2147,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
   function reset() {
     Object.assign(state, {
-      step: 0, placed: false, contextSet: false, editingField: null,
+      step: 0, placed: false, analyzing: false, contextSet: false, editingField: null,
       form: { ...DEFAULTS, constraints: [...DEFAULTS.constraints] },
       range: "Explore",
       shown: new Set(), pending: new Set(), selected: null, spent: new Set(),
