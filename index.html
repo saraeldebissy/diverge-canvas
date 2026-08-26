@@ -729,18 +729,20 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
    COACHING
    ============================================================ */
 
-/* A soft wash rather than a hard ring: the target should read as "lit",
-   not "boxed". Low, breathing opacity carries the emphasis instead. */
+/* A ring at the target's own edge that scales outward while it fades,
+   then resets and does it again — a ping, not a static box. Reads as
+   "something is happening here" without ever looking boxed-in. */
 .coach{ position:relative; }
 .coach::after{
   content:""; position:absolute; inset:-5px;
-  border-radius:12px; border:1px solid var(--accent-24);
-  background:var(--accent-8);
-  pointer-events:none; animation:coachglow 2.2s var(--e-quart) infinite; z-index:3;
+  border-radius:12px; border:1px solid var(--accent-40);
+  background:var(--accent-16);
+  pointer-events:none; z-index:3;
+  transform-origin:center; animation:coachglow 1.8s cubic-bezier(0,0,.2,1) infinite;
 }
 @keyframes coachglow{
-  0%,100%{ opacity:.5; }
-  50%{ opacity:1; }
+  0%{ transform:scale(1); opacity:.9; }
+  100%{ transform:scale(1.4); opacity:0; }
 }
 
 /* The next-step menu floats beside the selected node on the canvas —
