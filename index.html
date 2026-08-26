@@ -137,13 +137,15 @@ button,input,textarea{ font:inherit; color:inherit; }
 button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--r-xs); }
 
-/* the utility voice: tracking and weight carry it, not a second typeface */
+/* the utility voice: tracking and weight carry it, not a second typeface.
+   Deliberately lighter than --ink-3 so it recedes further behind the
+   field values it labels — label and answer should never compete. */
 .label{
   font-size:var(--t-micro);
   font-weight:var(--w-mid);
   letter-spacing:.11em;
   text-transform:uppercase;
-  color:var(--ink-3);
+  color:var(--ink-4);
 }
 
 /* ============================================================
@@ -275,12 +277,23 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
 /* Spacing carries rhythm rather than sitting at one value: fields sit
    close inside a group, groups sit further apart. */
-.panel-body{ padding:16px 18px 24px; display:flex; flex-direction:column; gap:20px; }
-.group{ display:flex; flex-direction:column; gap:11px; }
+.panel-body{ padding:16px 18px 24px; display:flex; flex-direction:column; gap:22px; }
+.group{ display:flex; flex-direction:column; gap:15px; }
 
 .field{ display:flex; flex-direction:column; gap:5px; }
-.field-value{ font-size:var(--t-body); line-height:1.5; color:var(--ink-2); }
+.field-value{ font-size:var(--t-body); line-height:1.5; color:var(--ink); }
 .field-value.strong{ font-weight:var(--w-mid); color:var(--ink); letter-spacing:-.008em; }
+
+/* Click any context value to edit it in place — the field it belongs to
+   never stops being editable, before or after "Set context". Reset to
+   look like plain text at rest; only hints at being a button on hover. */
+.field-edit{
+  display:block; width:100%; text-align:left; font:inherit;
+  background:none; border:1px solid transparent; border-radius:var(--r-xs);
+  margin:-3px -5px; padding:2px 5px;
+  transition:background .16s var(--e-quart), border-color .16s var(--e-quart);
+}
+.field-edit:hover{ background:var(--surface-2); border-color:var(--line-2); cursor:text; }
 
 .chips{ display:flex; flex-wrap:wrap; gap:5px; }
 .chip{
@@ -340,7 +353,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 }
 .seg button:hover{ color:var(--ink); }
 .seg button.on{ background:var(--surface-2); color:var(--ink); box-shadow:var(--shadow-1); }
-.seg-note{ font-size:var(--t-meta); color:var(--ink-3); line-height:1.45; }
 
 .setup-go{ width:100%; justify-content:center; height:36px; }
 
@@ -1330,7 +1342,8 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   const state = {
     step: 0,
     placed: false,
-    context: null,
+    contextSet: false,
+    editingField: null,
     form: { ...DEFAULTS, constraints: [...DEFAULTS.constraints] },
     range: "Explore",
     shown: new Set(),
@@ -1582,6 +1595,46 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     wires.innerHTML = paths.join("");
   }
 
+  /* Problem/Persona/Goal read from state.form both before and after
+     "Set context" — there is no separate frozen snapshot, so editing
+     never stops working once the walkthrough moves past step 1. Click
+     the value to open it as a textarea; it closes back to plain text
+     on blur (see the ctxEl focusout handler below). */
+  function editableFieldHTML(key, labelText) {
+    const editing = state.editingField === key;
+    const val = state.form[key];
+    return `
+      <div class="field">
+        <label class="label" for="f_${key}">${labelText}</label>
+        ${editing
+          ? `<textarea class="inp" id="f_${key}" data-form="${key}" rows="2">${esc(val)}</textarea>`
+          : `<button type="button" class="field-value field-edit" id="f_${key}" data-editfield="${key}">${esc(val) || "—"}</button>`}
+      </div>`;
+  }
+
+  function constraintsHTML() {
+    return `
+      <div class="chips" id="fConstraints">${state.form.constraints.map((t, i) => `
+        <span class="chip">${esc(t)}
+          <button type="button" data-drop="${i}" aria-label="Remove ${esc(t)}">${ICON.x}</button>
+        </span>`).join("")}
+        <span class="chip chip-add"><span class="ico">${ICON.place}</span><input type="text" id="fConstraintAdd" placeholder="Add constraint" maxlength="60"></span>
+      </div>`;
+  }
+
+  /* No permanent caption under the segmented control — the description
+     of an option only matters while you're choosing it, so it rides
+     along as a native tooltip on that option instead of sitting there
+     forever once you've already picked one. */
+  function rangeHTML() {
+    return `
+      <div class="seg" id="fRange" role="group" aria-label="Creative range">
+        ${Object.keys(RANGE_NOTE).map((k) =>
+          `<button type="button" data-range="${k}" class="${k === state.range ? "on" : ""}" title="${esc(RANGE_NOTE[k])}">${k}</button>`
+        ).join("")}
+      </div>`;
+  }
+
   function renderContext() {
     const head = $("#ctxHead"), stateChip = $("#ctxState");
 
@@ -1591,7 +1644,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       ctxEl.innerHTML = `
         <div class="setup-lede">
           <h3>What are you solving?</h3>
-          <p>Diverge branches against this, not against the screen. Everything is editable and pre-filled, so you can walk straight through.</p>
+          <p>Diverge branches against this, not against the screen. Everything is editable and pre-filled, so you can walk straight through — and stays editable after, too.</p>
         </div>
         <div class="group">
           <div class="field">
@@ -1609,29 +1662,20 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
         </div>
         <div class="field">
           <span class="label">Constraints</span>
-          <div class="chips" id="fConstraints">${state.form.constraints.map((t, i) => `
-            <span class="chip">${esc(t)}
-              <button type="button" data-drop="${i}" aria-label="Remove ${esc(t)}">${ICON.x}</button>
-            </span>`).join("")}
-            <span class="chip chip-add"><span class="ico">${ICON.place}</span><input type="text" id="fConstraintAdd" placeholder="Add constraint" maxlength="60"></span>
-          </div>
+          ${constraintsHTML()}
         </div>
         <div class="field">
           <span class="label">Creative range</span>
-          <div class="seg" id="fRange" role="group" aria-label="Creative range">
-            ${Object.keys(RANGE_NOTE).map((k) => `<button type="button" data-range="${k}" class="${k === state.range ? "on" : ""}">${k}</button>`).join("")}
-          </div>
-          <span class="seg-note" id="rangeNote">${RANGE_NOTE[state.range]}</span>
+          ${rangeHTML()}
         </div>
         <button class="btn btn-primary setup-go" id="setContext" type="button">Set context</button>`;
       return;
     }
 
-    const c = state.context;
     head.textContent = "Project context";
-    stateChip.textContent = c ? state.range : "Empty";
+    stateChip.textContent = state.contextSet ? state.range : "Empty";
 
-    if (!c) {
+    if (!state.contextSet) {
       ctxEl.innerHTML = `
         <div class="blank">
           <p>Nothing to branch against yet. Place a screen, then say what you are solving.</p>
@@ -1647,18 +1691,17 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       </div>
       <div class="rule"></div>
       <div class="group">
-        <div class="field"><span class="label">Problem</span><span class="field-value">${esc(c.problem)}</span></div>
-        <div class="field"><span class="label">Persona</span><span class="field-value">${esc(c.persona)}</span></div>
-        <div class="field"><span class="label">Goal</span><span class="field-value">${esc(c.goal)}</span></div>
+        ${editableFieldHTML("problem", "Problem")}
+        ${editableFieldHTML("persona", "Persona")}
+        ${editableFieldHTML("goal", "Goal")}
       </div>
       <div class="field">
         <span class="label">Constraints</span>
-        <div class="chips">${c.constraints.map((t) => `<span class="chip">${esc(t)}</span>`).join("")}</div>
+        ${constraintsHTML()}
       </div>
       <div class="field">
         <span class="label">Creative range</span>
-        <span class="field-value strong">${state.range}</span>
-        <span class="field-value">${RANGE_NOTE[state.range]}</span>
+        ${rangeHTML()}
       </div>`;
   }
 
@@ -1681,7 +1724,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
         <div class="reason-title"><span class="kind">${n.kind}</span><h3>${n.name}</h3><span class="sub">${n.note}</span></div>
         <div class="reason-list">
           <div class="reason-item"><span class="label">Held constant</span>
-            <p>${state.context ? esc(state.context.constraints.join(" · ")) : "No constraints set yet."} Every branch inherits these.</p></div>
+            <p>${state.contextSet ? esc(state.form.constraints.join(" · ")) : "No constraints set yet."} Every branch inherits these.</p></div>
         </div>`;
       return;
     }
@@ -1996,16 +2039,27 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     const rng = e.target.closest("[data-range]");
     if (rng) { state.range = rng.dataset.range; render(); return; }
 
+    const editBtn = e.target.closest("[data-editfield]");
+    if (editBtn) {
+      state.editingField = editBtn.dataset.editfield;
+      render();
+      const el = ctxEl.querySelector(`[data-form="${state.editingField}"]`);
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+      return;
+    }
+
     if (e.target.closest("#setContext")) {
       if (state.step !== 1) return;
-      state.context = {
-        problem: state.form.problem.trim() || "Not set",
-        persona: state.form.persona.trim() || "Not set",
-        goal:    state.form.goal.trim()    || "Not set",
-        constraints: state.form.constraints.length ? [...state.form.constraints] : ["No constraints"]
-      };
+      state.contextSet = true;
       advance(); render(); fitTo(["root"]);
     }
+  });
+
+  /* Closes an in-place edit back to plain text once the field loses
+     focus — click elsewhere, or tab away, both commit it. */
+  ctxEl.addEventListener("focusout", (e) => {
+    const k = e.target.dataset && e.target.dataset.form;
+    if (k && state.editingField === k) { state.editingField = null; render(); }
   });
 
   exportBtn.addEventListener("click", () => {
@@ -2043,11 +2097,11 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
   function reset() {
     Object.assign(state, {
-      step: 0, placed: false, context: null,
+      step: 0, placed: false, contextSet: false, editingField: null,
       form: { ...DEFAULTS, constraints: [...DEFAULTS.constraints] },
       range: "Explore",
       shown: new Set(), pending: new Set(), selected: null, spent: new Set(),
-      done: false, busy: false
+      done: false, busy: false, rejected: new Map(), rejectingId: null
     });
     sheet.classList.remove("on");
     status.classList.remove("busy");
