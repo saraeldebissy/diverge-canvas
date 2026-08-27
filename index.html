@@ -73,6 +73,8 @@
   --ui-text-3:  oklch(0.545 0.015 258);
   --ui-mint:    oklch(0.822 0.166 158);
   --ui-mint-dk: oklch(0.262 0.056 158);
+  --ui-mint-30: oklch(0.822 0.166 158 / .30);
+  --ui-mint-16: oklch(0.822 0.166 158 / .16);
 
   /* ---- type ---------------------------------------------------------
      Two ramps. The chrome ramp runs 9 / 11 / 13 / 17 / 22 with ≥1.18
@@ -219,6 +221,34 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 .stepdivider{ width:1px; align-self:stretch; background:var(--line-2); flex:none; }
 .stepguide{ font-size:var(--t-meta); color:var(--ink-2); line-height:1.4; max-width:340px; }
 
+.protonote{
+  position:absolute; left:50%; transform:translateX(-50%);
+  top:calc(var(--bar-h) + 6px);
+  display:flex; align-items:center; gap:8px;
+  padding:6px 8px 6px 10px; border-radius:999px;
+  background:var(--surface-2); border:1px solid var(--line);
+  box-shadow:var(--shadow-1);
+  font-size:var(--t-micro); color:var(--ink-2);
+  white-space:nowrap; z-index:39;
+}
+.protonote-dot{
+  position:relative; width:6px; height:6px; border-radius:50%;
+  background:var(--accent); flex:none;
+}
+.protonote-dot::after{
+  content:""; position:absolute; inset:-5px; border-radius:50%;
+  border:1px solid var(--accent-40); background:var(--accent-12);
+  animation:coachglow 1.8s cubic-bezier(0,0,.2,1) infinite;
+}
+.protonote-x{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:16px; height:16px; margin-left:2px; border-radius:50%; border:none;
+  background:transparent; color:var(--ink-3); cursor:pointer; flex:none;
+  font-size:13px; line-height:1; padding:0;
+  transition:background .12s, color .12s;
+}
+.protonote-x:hover{ background:var(--surface); color:var(--ink); }
+
 .baractions{ margin-left:auto; display:flex; align-items:center; gap:8px; flex:none; }
 
 .btn{
@@ -242,6 +272,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 }
 .btn-primary:hover{ background:var(--accent-2); border-color:var(--accent-2); color:var(--surface-2); }
 .btn[hidden]{ display:none; }
+.btn-head{ height:28px; padding:0 12px; font-size:var(--t-meta); margin-left:auto; }
 
 /* ============================================================
    FLOATING PANELS
@@ -375,8 +406,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 }
 .seg button:hover{ color:var(--ink); }
 .seg button.on{ background:var(--surface-2); color:var(--ink); box-shadow:var(--shadow-1); }
-
-.setup-go{ width:100%; justify-content:center; height:36px; }
 
 /* ---------- reasoning ---------- */
 
@@ -590,90 +619,115 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   background:var(--ui-bg); color:var(--ui-text);
   font-size:var(--d-meta); line-height:1.35;
 }
-.ui-nav{ display:flex; align-items:center; gap:5px; color:var(--ui-text-3); font-size:var(--d-meta); }
-.ui-nav .dot{ width:9px; height:9px; border-radius:50%; background:var(--ui-card-2); margin-left:auto; }
+.ui-nav{
+  display:flex; align-items:center; gap:5px; color:var(--ui-text-3); font-size:var(--d-meta);
+  padding-bottom:6px; border-bottom:1px solid var(--ui-line);
+}
+.ui-nav .dot{
+  width:14px; height:14px; border-radius:50%; margin-left:auto;
+  background:linear-gradient(160deg, var(--ui-card-2), var(--ui-bg));
+  box-shadow:inset 0 0 0 1px var(--ui-line);
+}
 .ui-h{ font-size:var(--d-head); font-weight:var(--w-strong); letter-spacing:-.022em; line-height:1.05; }
 .ui-h.sm{ font-size:var(--d-body); letter-spacing:-.016em; line-height:1.15; }
 .ui-sub{ font-size:var(--d-meta); color:var(--ui-text-2); line-height:1.3; }
 
-.ui-plans{ display:flex; gap:5px; flex:1; min-height:0; }
+.ui-plans{ display:flex; gap:6px; flex:1; min-height:0; }
 .pcard{
   flex:1; min-width:0;
-  border:1px solid var(--ui-line); border-radius:5px;
+  border:1px solid var(--ui-line); border-radius:8px;
   background:var(--ui-card);
   padding:7px 6px;
   display:flex; flex-direction:column; gap:4px;
+  box-shadow:0 1px 2px oklch(0 0 0 / .18);
 }
-.pcard.rec{ border-color:var(--ui-mint); background:linear-gradient(var(--ui-mint-dk), var(--ui-card)); }
+.pcard.rec{
+  border-color:var(--ui-mint);
+  background:linear-gradient(var(--ui-mint-dk), var(--ui-card));
+  box-shadow:0 3px 10px var(--ui-mint-16), inset 0 1px 0 var(--ui-mint-30);
+}
 .pname{ font-size:var(--d-meta); font-weight:var(--w-mid); color:var(--ui-text-2); letter-spacing:.02em; }
 .pcard.rec .pname{ color:var(--ui-mint); }
 .pprice{ font-size:var(--d-head); font-weight:var(--w-strong); letter-spacing:-.03em; line-height:1; }
 .pprice s{ font-size:var(--d-micro); font-weight:var(--w-body); color:var(--ui-text-3); text-decoration:none; letter-spacing:0; }
-.pfeat{ display:flex; flex-direction:column; gap:2px; margin-top:1px; }
-.pfeat span{ display:flex; align-items:center; gap:3px; font-size:var(--d-micro); color:var(--ui-text-3); line-height:1.25; }
-.pfeat span::before{ content:""; width:3px; height:3px; border-radius:50%; background:var(--ui-text-3); flex:none; }
-.pcard.rec .pfeat span::before{ background:var(--ui-mint); }
+.pfeat{ display:flex; flex-direction:column; gap:3px; margin-top:1px; }
+.pfeat span{ display:flex; align-items:center; gap:4px; font-size:var(--d-micro); color:var(--ui-text-2); line-height:1.25; }
+.pfeat span::before{
+  content:"✓"; flex:none; font-size:8px; font-weight:var(--w-strong);
+  color:var(--ui-text-3); line-height:1;
+}
+.pcard.rec .pfeat span::before{ color:var(--ui-mint); }
 .ptag{
-  align-self:flex-start; padding:1px 4px; border-radius:2px;
+  align-self:flex-start; display:flex; align-items:center; gap:2px;
+  padding:2px 5px; border-radius:3px;
   background:var(--ui-mint); color:var(--ui-mint-dk);
   font-size:var(--d-micro); font-weight:var(--w-strong);
   letter-spacing:.06em; text-transform:uppercase; line-height:1.5;
+  box-shadow:0 1px 3px var(--ui-mint-30);
 }
 
 .ui-cta{
-  flex:none; height:21px; border-radius:5px;
+  flex:none; height:24px; border-radius:7px;
   display:flex; align-items:center; justify-content:center;
   font-size:var(--d-meta); font-weight:var(--w-mid); letter-spacing:-.01em;
   background:var(--ui-card-2); color:var(--ui-text);
 }
-.ui-cta.solid{ background:var(--ui-mint); color:var(--ui-mint-dk); }
+.ui-cta.solid{
+  background:var(--ui-mint); color:var(--ui-mint-dk); font-weight:var(--w-strong);
+  box-shadow:0 2px 8px var(--ui-mint-30), inset 0 1px 0 oklch(1 0 0 / .25);
+}
 .ui-cta.ghost{ background:transparent; border:1px solid var(--ui-line); color:var(--ui-text-2); }
 
-.ui-tbl{ flex:1; display:flex; flex-direction:column; gap:3px; min-height:0; }
-.trow{ display:flex; align-items:center; gap:4px; }
+.ui-tbl{ flex:1; display:flex; flex-direction:column; gap:0; min-height:0; border-radius:7px; overflow:hidden; }
+.trow{ display:flex; align-items:center; gap:4px; padding:3px 4px; }
+.trow:nth-child(even){ background:oklch(1 0 0 / .025); }
 .trow .tl{ width:38%; font-size:var(--d-micro); color:var(--ui-text-3); }
 .trow .tc{ flex:1; display:flex; align-items:center; justify-content:center; font-size:var(--d-micro); color:var(--ui-text-2); }
 .trow.head .tc{ flex-direction:column; gap:1px; color:var(--ui-text); }
 .trow.head .tc b{ font-size:var(--d-body); font-weight:var(--w-strong); letter-spacing:-.02em; }
 .trow.head .tc.rec b{ color:var(--ui-mint); }
 .trow.head .tc em{ font-style:normal; font-size:var(--d-micro); color:var(--ui-text-3); }
-.trow + .trow{ border-top:1px solid var(--ui-line); padding-top:3px; }
-.yes{ color:var(--ui-mint); font-size:var(--d-meta); line-height:1; }
+.trow.head{ padding-bottom:5px; border-bottom:1px solid var(--ui-line); margin-bottom:2px; }
+.yes{ color:var(--ui-mint); font-size:var(--d-meta); line-height:1; font-weight:var(--w-strong); }
 .no{ color:var(--ui-text-3); font-size:var(--d-meta); line-height:1; }
 
 .ui-outcomes{ flex:1; display:flex; flex-direction:column; gap:4px; min-height:0; }
 .orow{
   display:flex; align-items:center; gap:6px;
-  padding:5px 6px; border-radius:5px;
+  padding:5px 6px; border-radius:7px;
   border:1px solid var(--ui-line); background:var(--ui-card);
 }
-.orow.rec{ border-color:var(--ui-mint); background:linear-gradient(90deg, var(--ui-mint-dk), var(--ui-card)); }
+.orow.rec{
+  border-color:var(--ui-mint);
+  background:linear-gradient(90deg, var(--ui-mint-dk), var(--ui-card));
+  box-shadow:0 2px 8px var(--ui-mint-16);
+}
 .orow .otxt{ flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
 .orow .otxt b{ font-size:var(--d-meta); font-weight:var(--w-mid); letter-spacing:-.01em; }
 .orow .otxt span{ font-size:var(--d-micro); color:var(--ui-text-3); }
 .orow .oprice{ font-size:var(--d-body); font-weight:var(--w-strong); letter-spacing:-.02em; flex:none; }
 .orow.rec .oprice{ color:var(--ui-mint); }
 
-.ui-ask{ display:flex; flex-direction:column; gap:5px; padding:7px; border-radius:5px; background:var(--ui-card); border:1px solid var(--ui-line); }
+.ui-ask{ display:flex; flex-direction:column; gap:5px; padding:7px; border-radius:7px; background:var(--ui-card); border:1px solid var(--ui-line); }
 .ui-ask b{ font-size:var(--d-meta); font-weight:var(--w-mid); letter-spacing:-.01em; }
 .ui-opts{ display:flex; gap:4px; }
 .uopt{
   flex:1; text-align:center; padding:3px 2px; border-radius:9px;
   border:1px solid var(--ui-line); color:var(--ui-text-3); font-size:var(--d-micro);
 }
-.uopt.on{ border-color:var(--ui-mint); background:var(--ui-mint-dk); color:var(--ui-mint); }
+.uopt.on{ border-color:var(--ui-mint); background:var(--ui-mint-dk); color:var(--ui-mint); font-weight:var(--w-mid); }
 
 .ui-reason{
   display:flex; align-items:flex-start; gap:5px;
-  padding:6px; border-radius:5px;
-  background:var(--ui-mint-dk); border:1px solid oklch(0.822 0.166 158 / .28);
-  font-size:var(--d-micro); line-height:1.4; color:oklch(0.90 0.09 158);
+  padding:6px 7px; border-radius:7px;
+  background:var(--ui-card); border:1px solid var(--ui-line);
+  font-size:var(--d-micro); line-height:1.4; color:var(--ui-text-2);
 }
 .ui-reason::before{ content:""; width:3px; height:3px; border-radius:50%; background:var(--ui-mint); margin-top:3px; flex:none; }
 
 .ui-switch{
   display:flex; align-items:center; gap:5px;
-  padding:5px 7px; border-radius:5px;
+  padding:5px 7px; border-radius:7px;
   border:1px dashed var(--ui-line); color:var(--ui-text-2); font-size:var(--d-meta);
 }
 .ui-switch span{ margin-left:auto; color:var(--ui-text-3); }
@@ -745,13 +799,13 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 .coach{ position:relative; }
 .coach::after{
   content:""; position:absolute; inset:-5px;
-  border-radius:12px; border:1px solid var(--accent-40);
-  background:var(--accent-16);
+  border-radius:inherit;
+  background:var(--accent-24);
   pointer-events:none; z-index:3;
   transform-origin:center; animation:coachglow 1.8s cubic-bezier(0,0,.2,1) infinite;
 }
 @keyframes coachglow{
-  0%{ transform:scale(1); opacity:.9; }
+  0%{ transform:scale(1); opacity:1; }
   100%{ transform:scale(1.4); opacity:0; }
 }
 
@@ -833,6 +887,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 .canvasfoot .status,.canvasfoot .zoom{ transition:transform .34s var(--e-quint); }
 .app.focusmode .canvasfoot .status,
 .app.focusmode .canvasfoot .zoom{ transform:none; }
+.app.panelr-collapsed .canvasfoot .zoom{ transform:none; }
 
 /* Solid, not glass. A blur here would be decoration: there is nothing
    meaningful behind these to see through to. */
@@ -996,10 +1051,17 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     </div>
   </header>
 
+  <div id="protoNote" class="protonote" hidden>
+    <span class="protonote-dot" aria-hidden="true"></span>
+    <span>Working prototype: not everything is clickable. Follow the glowing element to see what to do next.</span>
+    <button class="protonote-x" id="protoNoteX" type="button" aria-label="Dismiss">&times;</button>
+  </div>
+
   <aside class="panel panel-l">
     <div class="panel-head">
       <h2 id="ctxHead">Project context</h2>
       <span class="label state" id="ctxState">Empty</span>
+      <button class="btn btn-primary btn-head" id="setContext" type="button" hidden>Set context</button>
     </div>
     <div class="panel-body" id="ctx"></div>
   </aside>
@@ -1169,7 +1231,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
     copyDirect:  () => copyMock("Plus is likely the best fit for you.", "Choose Plus"),
     copyExplain: () => copyMock("Based on frequent use, Plus gives you the best balance of value and flexibility.", "Choose Plus"),
-    copyLow:     () => copyMock("Start with Plus — you can compare all plans before choosing.", "Start with Plus")
+    copyLow:     () => copyMock("Start with Plus, you can compare all plans before choosing.", "Start with Plus")
   };
 
   function copyMock(line, cta) {
@@ -1194,66 +1256,66 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       x: 380, y: 20, parent: "root", kind: "Direction", name: "Guided choice", icon: "branch",
       foot: "One plan suggested first", mock: "guided",
       r: {
-        why: "Reduces comparison work by suggesting a clear starting point.",
-        strength: "Good for users who feel unsure about which plan fits them.",
-        tradeoff: "The recommendation must feel explainable or it may reduce trust.",
-        assumption: "Users will accept guidance if they can still compare alternatives.",
-        risk: "The recommendation should not feel manipulative."
+        why: "Leads with one recommended plan instead of three, so the user is evaluating a decision already made, not assembling one from scratch: the default-effect that pre-selection shortens choice.",
+        strength: "Cuts decision effort for anyone who would have picked the middle tier anyway, which is most people; the interface reaches the likely outcome faster instead of making it prove itself.",
+        tradeoff: "Collapses three options into one before showing why, so the direction has to earn trust through what happens next, not through its own layout.",
+        assumption: "A suggested plan reads as a starting point the user can leave, not a mandate, which only holds if the exit stays visible.",
+        risk: "Unsupported, one suggested plan reads as a dark pattern rather than a shortcut. This direction only works paired with a concept that shows its reasoning."
       }
     },
     compare: {
       x: 380, y: 300, parent: "root", kind: "Direction", name: "Compare first", icon: "branch",
       foot: "All plans visible, side by side", mock: "compare",
       r: {
-        why: "Puts every plan on screen at once so the user judges value themselves.",
-        strength: "Respects users who do not want to be steered toward anything.",
-        tradeoff: "More to read before a decision: the comparison work stays with the user.",
-        assumption: "Users already know which differences matter to them.",
-        risk: "Whether a three-column table still holds up at narrow widths."
+        why: "Puts all three plans on screen with no recommendation, so the comparison happens in view of the data instead of being done for the user upfront.",
+        strength: "Carries no trust cost, since there is no claim to defend; strongest for return users who already know what they are comparing against.",
+        tradeoff: "Trades speed for completeness. Every plan reads as equally weighted, which is accurate but offers no help forming a preference, the opposite bet from guided choice.",
+        assumption: "Users arrive with enough sense of their own usage (roughly, how often they order) to map '2/week' against 'unlimited' unprompted.",
+        risk: "At three columns this is the layout most exposed to content growth, and the direction most likely to produce a default pick made out of habit, not real comparison."
       }
     },
     outcome: {
       x: 380, y: 580, parent: "root", kind: "Direction", name: "Outcome-led", icon: "branch",
       foot: "What each plan enables, then price", mock: "outcome",
       r: {
-        why: "Leads with what each plan lets you do, so price is read against value.",
-        strength: "Reframes the decision from cost to outcome.",
-        tradeoff: "Delays the number a price-aware user came to find.",
-        assumption: "Users will read benefit copy before scanning for the price.",
-        risk: "Whether benefit copy reads as marketing and gets skipped entirely."
+        why: "Reframes the decision from three price points to three end-states, so the user chooses what they get before what they pay, outcome-framing over feature-framing.",
+        strength: "Works well because the plans genuinely differ in what they enable, not just quantity; it's the direction most likely to change a decision, not just speed one up.",
+        tradeoff: "Price becomes the second thing read, not the first, which fights the read-order a price-aware persona already brings to a pricing screen.",
+        assumption: "A named outcome, like 'never think about delivery fees,' maps cleanly enough onto plan mechanics that it doesn't need a footnote to be believed.",
+        risk: "If the outcome copy reads as generic benefit marketing rather than something specific and checkable, it gets skimmed like ad copy, and the user falls back to hunting for the price anyway."
       }
     },
     needs: {
       x: 760, y: -260, parent: "guided", kind: "Concept", name: "Needs-first", icon: "concept",
       foot: "One question before recommending", mock: "needs",
       r: {
-        why: "Asks one lightweight question, then narrows three plans to one suggestion.",
-        strength: "Makes the recommendation feel earned rather than assumed.",
-        tradeoff: "Adds a step before anyone sees a price.",
-        assumption: "Users will answer one question if it visibly shortens the decision.",
-        risk: "Drop-off at the question from users who only wanted the pricing table."
+        why: "Asks one question, how often you order, before narrowing three plans to one, so the recommendation is visibly derived from an input the user just gave, not a black box.",
+        strength: "One cheap question converts 'why Plus' into 'because you said weekly,' which is concrete and checkable in a way an unexplained default is not.",
+        tradeoff: "Still one extra screen between arrival and the pricing table, friction a price-aware user did not ask for.",
+        assumption: "A single answer carries enough signal to justify narrowing to one plan; if it does not, this concept adds a step without adding trust.",
+        risk: "Self-reported frequency is unreliable (a user who orders weekly but taps 'monthly' gets the wrong plan recommended with high apparent confidence)."
       }
     },
     confidence: {
       x: 760, y: 20, parent: "guided", kind: "Concept", name: "Confidence-first", icon: "concept",
       foot: "Explains why the plan fits", mock: "confidence",
       r: {
-        why: "Shows the reasoning behind the recommendation at the moment it is made.",
-        strength: "The suggestion becomes explainable, which is what protects trust.",
-        tradeoff: "The explanation has to be specific and true, or it reads as a script.",
-        assumption: "A single short reason is enough, and users will not ask for the full logic.",
-        risk: "Whether citing usage feels informed or feels surveilled."
+        why: "States the specific behavior behind the recommendation, '3 orders a week last month,' at the moment it appears, instead of asking the user to trust it on authority.",
+        strength: "The claim is falsifiable: the user can check it against their own memory. Claims that can be checked are the ones that survive scrutiny, which most recommendation UI skips.",
+        tradeoff: "The number has to actually be right. A wrong or stale figure damages more here than a vague claim would, since specificity raises the cost of being wrong.",
+        assumption: "Being shown your own usage read as helpful personalization, not as evidence you're being tracked.",
+        risk: "The line between 'we noticed this to help you' and 'we noticed this' sits entirely in wording and placement, not the underlying mechanism, and it's easy to land on the wrong side of it."
       }
     },
     control: {
       x: 760, y: 300, parent: "guided", kind: "Concept", name: "Control-first", icon: "concept",
       foot: "Recommend, keep comparison visible", mock: "control",
       r: {
-        why: "Recommends a plan but keeps comparing and switching one tap away at all times.",
-        strength: "The lowest-pressure way to guide: the exit is always on screen.",
-        tradeoff: "A persistent compare affordance competes with the recommendation.",
-        assumption: "Visible control reduces hesitation more than it invites second-guessing.",
-        risk: "Whether users register the recommendation at all."
+        why: "Recommends a plan but keeps 'compare all 3' one tap away at all times, so the user is never further than a glance from re-opening the decision the recommendation just closed.",
+        strength: "Directly answers the standard objection to any recommendation UI, 'what if this is wrong for me,' by keeping the alternative reachable instead of requiring a back button.",
+        tradeoff: "A permanent compare row is a permanent second call to action beside the primary one, which will measurably soften click-through even among users who'd have accepted the recommendation.",
+        assumption: "Visible control reduces hesitation on net, more people commit because the exit exists than get pulled away by seeing it.",
+        risk: "If 'compare all plans' gets tapped more than 'choose Plus,' the pattern isn't reassuring anyone, it's just relocating the indecision it was meant to resolve."
       }
     },
     direct: {
@@ -1261,11 +1323,11 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       foot: "Tone: assertive", mock: "copyDirect",
       copy: "“Plus is likely the best fit for you.”",
       r: {
-        why: "States the recommendation in one line with nothing between it and the user.",
-        strength: "Shortest path to a decision: there is nothing to parse.",
-        tradeoff: "“Likely” carries no reason, so it asks for trust it has not earned.",
-        assumption: "Users accept a flat recommendation from a product they already use.",
-        risk: "Whether an unexplained claim reads as confident or as a sales line."
+        why: "States the recommendation as a flat claim with no supporting reason, the shortest possible distance between seeing the plan and being told what to do.",
+        strength: "Fastest to read, and for a user who already trusts the source, fewer words means less surface area to disagree with.",
+        tradeoff: "Carries no evidence, so it has nothing to fall back on if the first reaction is skepticism rather than compliance.",
+        assumption: "Trust in the recommendation is already established before this line is read, so its job is speed, not persuasion.",
+        risk: "Unqualified confidence, 'likely the best fit,' reads as a template line applied to everyone, which undermines the exact confidence it's asserting."
       }
     },
     explain: {
@@ -1273,23 +1335,23 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       foot: "Tone: reasoned", mock: "copyExplain",
       copy: "“Based on frequent use, Plus gives you the best balance of value and flexibility.”",
       r: {
-        why: "Attaches the recommendation to a reason the user can check against their own behaviour.",
-        strength: "Makes the logic inspectable, which is what makes guidance defensible.",
-        tradeoff: "A longer line, and it names the behaviour data being used.",
-        assumption: "Users are comfortable being told what the product noticed about them.",
-        risk: "Whether “frequent use” reads as helpful or as surveillance."
+        why: "Names the specific behavior the recommendation is based on, so the reader can independently check the claim against what they remember doing.",
+        strength: "Turns an assertion into an inference the user can verify, which is what actually earns trust in a recommendation, rather than just stating one.",
+        tradeoff: "Longer, and it has to surface what data sits behind the suggestion, which some users read as a reminder of tracking rather than a courtesy.",
+        assumption: "Naming the behavioral basis, 'frequent use,' reads as transparency, not surveillance, for this persona and this product.",
+        risk: "The exact same sentence reads as respectful ('here's my reasoning') or invasive ('you're watching me') depending entirely on tone and placement, not wording alone."
       }
     },
     lowpress: {
       x: 1140, y: 300, parent: "confidence", kind: "Copy", name: "Low-pressure", icon: "copy",
       foot: "Tone: open", mock: "copyLow",
-      copy: "“Start with Plus — you can compare all plans before choosing.”",
+      copy: "“Start with Plus, you can compare all plans before choosing.”",
       r: {
-        why: "Recommends and hands back control inside the same sentence.",
-        strength: "No dead end: the recommendation is a starting point, not a verdict.",
-        tradeoff: "A softer commitment may leave undecided users still undecided.",
-        assumption: "Naming the exit builds more confidence than it invites hesitation.",
-        risk: "Whether the reassurance converts, or only defers the decision."
+        why: "Recommends and hands back control in the same sentence, so accepting the suggestion and keeping the option to change it aren't presented as opposites.",
+        strength: "Removes the main cost of accepting a recommendation, the fear of being locked into the wrong one, without adding a second UI element to do it.",
+        tradeoff: "Softening the commitment, 'start with,' can read as the product itself being unsure, which may leave an already-undecided user without the nudge they needed.",
+        assumption: "Naming the exit inside the same sentence builds more confidence than it invites hesitation, reads as reassurance, not as a hedge.",
+        risk: "For a user who wanted a strong recommendation, this under-commits: the softness reads as 'we don't actually think this is right for you,' not 'we trust you to check.'"
       }
     }
   };
@@ -1325,13 +1387,13 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
   const STEPS = [
     { label: "Place design",   on: { type: "act",  node: "root",       act: "place" }, tip: "Add the screen or component you're solving for. Every direction below branches from it." },
-    { label: "Set context",    on: { type: "el",   el: "#setContext" },                              tip: "Save the problem, persona and goal — directions get built against this, not the screen." },
+    { label: "Set context",    on: { type: "el",   el: "#setContext" },                              tip: "Save the problem, persona and goal. Directions get built against this, not the screen." },
     { label: "Start",          on: { type: "act",  node: "root",       act: "start"   }, tip: "Generate three directions that solve this problem in meaningfully different ways." },
     { label: "Directions",     on: { type: "node", node: "guided"      },                tip: "Open a direction to read why it exists, its trade-off, and what still needs testing." },
     { label: "Branch concept", on: { type: "act",  node: "guided",     act: "concept" }, tip: "Split this direction into three concepts that keep its idea but vary the approach." },
     { label: "Inspect",        on: { type: "node", node: "confidence"  },                tip: "Open a concept to weigh its trade-offs before writing copy for it." },
     { label: "Copy variants",  on: { type: "act",  node: "confidence", act: "copy"    }, tip: "Write three copy variants for this concept, from direct to reassuring." },
-    { label: "Select line",    on: { type: "node", node: "lowpress"    },                tip: "Select a line to lock in the path — screen, direction, concept and copy become one export." },
+    { label: "Select line",    on: { type: "node", node: "lowpress"    },                tip: "Select a line to lock in the path. Screen, direction, concept and copy become one export." },
     { label: "Export",         on: { type: "el",   el: "#export" },                       tip: "Export the path you built as a rationale doc, ready to hand to a reviewer." }
   ];
 
@@ -1369,6 +1431,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   const state = {
     step: 0,
     placed: false,
+    noteDismissed: false,
     analyzing: false,
     contextSet: false,
     editingField: null,
@@ -1457,7 +1520,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
         </div>` : ""}
       ${showForm ? `
         <div class="reject-form">
-          <textarea id="rejectReason" placeholder="Why are you rejecting this? Optional — it's what the next round reasons against." rows="2"></textarea>
+          <textarea id="rejectReason" placeholder="Why are you rejecting this? Optional, but it's what the next round reasons against." rows="2"></textarea>
           <div class="reject-form-row">
             <button class="btn" type="button" data-cancel-reject="${id}">Cancel</button>
             <button class="btn btn-primary" type="button" data-confirm-reject="${id}">Confirm reject</button>
@@ -1474,15 +1537,21 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     if (id === "root") {
       if (state.step !== 2) return "";
       const live = !!coachTip("act", "root", "start");
+      const rows = ACTS.map((a) => {
+        if (a.id === "concept") {
+          return `<button class="act live${live ? " coach" : ""}" type="button" data-act="start" data-node="root">
+                    <span class="ico">${ICON.concept}</span>${a.label}
+                  </button>`;
+        }
+        return `<button class="act" type="button" data-act="${a.id}" data-node="root">
+                  <span class="ico">${ICON[a.id]}</span>${a.label}
+                </button>`;
+      }).join("");
       return `
         <div class="nodemenu-acts">
           <span class="nodemenu-label">Start here</span>
           ${exploreControlsHTML()}
-          <div class="act-list">
-            <button class="act live${live ? " coach" : ""}" type="button" data-act="start" data-node="root">
-              <span class="ico">${ICON.spark}</span>Start exploring
-            </button>
-          </div>
+          <div class="act-list">${rows}</div>
         </div>`;
     }
     if (n.kind === "Copy") return "";
@@ -1580,7 +1649,8 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
         continue;
       }
       const sel = state.selected === id;
-      const tip = coachTip("node", id);
+      const s = STEPS[state.step];
+      const tip = coachTip("node", id) || (!sel && !state.done && s && s.on.type === "act" && s.on.node === id ? s.tip : null);
       const rejected = state.rejected.has(id);
       parts.push(`
         <div class="node${sel ? " sel" : ""}${rejected ? " rejected" : ""}${onPath && !PATH.includes(id) ? " dim" : ""}${onPath && PATH.includes(id) ? " onpath" : ""}"
@@ -1636,7 +1706,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
         <label class="field-q" for="f_${key}">${labelText}</label>
         ${editing
           ? `<textarea class="inp" id="f_${key}" data-form="${key}" rows="2">${esc(val)}</textarea>`
-          : `<button type="button" class="field-value field-edit" id="f_${key}" data-editfield="${key}">${esc(val) || "—"}</button>`}
+          : `<button type="button" class="field-value field-edit" id="f_${key}" data-editfield="${key}">${esc(val) || "Not set"}</button>`}
       </div>`;
   }
 
@@ -1676,7 +1746,9 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   }
 
   function renderContext() {
-    const head = $("#ctxHead"), stateChip = $("#ctxState");
+    const head = $("#ctxHead"), stateChip = $("#ctxState"), setCtxBtn = $("#setContext");
+    stateChip.hidden = false;
+    setCtxBtn.hidden = true;
 
     /* A brief "reading" beat right after placement — the fields below
        land pre-filled either way, but this is what makes that feel like
@@ -1686,7 +1758,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       stateChip.textContent = "Analyzing…";
       ctxEl.innerHTML = `
         <div class="blank">
-          <p>Reading the screen — drafting a problem, persona and goal to start from…</p>
+          <p>Reading the screen, drafting a problem, persona and goal to start from…</p>
           <span class="barline m"></span><span class="barline s"></span><span class="barline m"></span>
         </div>`;
       return;
@@ -1694,11 +1766,12 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
     if (state.step === 1) {
       head.textContent = "Project context";
-      stateChip.textContent = "Step 2";
+      stateChip.hidden = true;
+      setCtxBtn.hidden = false;
       ctxEl.innerHTML = `
         <div class="setup-lede">
           <h3>Drafted from your screen</h3>
-          <p>A starting point Diverge pulled from what you placed — check it, adjust anything, and it stays editable after, too.</p>
+          <p>A starting point Diverge pulled from what you placed. Check it, adjust anything, and it stays editable after, too.</p>
         </div>
         <div class="group">
           <div class="field">
@@ -1725,8 +1798,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
         <div class="field">
           <span class="label">Design system</span>
           ${designSystemHTML()}
-        </div>
-        <button class="btn btn-primary setup-go" id="setContext" type="button">Set context</button>`;
+        </div>`;
       return;
     }
 
@@ -1736,8 +1808,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     if (!state.contextSet) {
       ctxEl.innerHTML = `
         <div class="blank">
-          <p>Place a screen or a component to begin. Diverge helps you most when you give it context — the persona, the problem, the goal, and which dimension you want to explore.</p>
-          <p>This is a working prototype: follow the highlighted glow for what's fully wired here; everything else is standing in for the idea.</p>
+          <p>Place a screen or a component to begin. Diverge helps you most when you give it context: the persona, the problem, the goal, and which dimension you want to explore.</p>
           <span class="barline m"></span><span class="barline s"></span><span class="barline m"></span>
         </div>`;
       return;
@@ -1774,6 +1845,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     /* Nothing to reason about until something is selected: collapse the
        panel entirely rather than show it holding a placeholder. */
     panelR.classList.toggle("collapsed", !id);
+    app.classList.toggle("panelr-collapsed", !id);
     if (!id) {
       countEl.textContent = "No selection";
       reason.innerHTML = `<div class="blank"><p>Select any frame on the canvas to read why that direction exists, what it trades away, and what still needs validating.</p></div>`;
@@ -1838,6 +1910,8 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       : `<b>${state.step + 1}</b>/${STEPS.length} · ${STEPS[state.step].label}`;
     $("#stepGuide").textContent = state.done ? "" : STEPS[state.step].tip;
     $("#stepDivider").style.display = state.done ? "none" : "";
+    const pn = $("#protoNote");
+    pn.hidden = state.placed || state.noteDismissed;
     exportBtn.hidden = state.step < 8;
     renderElCoach();
   }
@@ -1852,10 +1926,10 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
      VIEWPORT
      ========================================================== */
 
-  function fitRegion() {
+  function fitRegion(fullWidth = false) {
     const r = canvas.getBoundingClientRect();
     let left = r.left + 30, right = r.right - 30, top = r.top + 78, bottom = r.bottom - 66;
-    if (!app.classList.contains("focusmode")) {
+    if (!fullWidth && !app.classList.contains("focusmode")) {
       const l = document.querySelector(".panel-l").getBoundingClientRect();
       if (l.width) left = l.right + 26;
       /* panel-r collapses whenever nothing is selected, so the canvas
@@ -1890,7 +1964,8 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       x0 = Math.min(x0, n.x); y0 = Math.min(y0, n.y - 24);
       x1 = Math.max(x1, n.x + W); y1 = Math.max(y1, n.y + H + 58);
     }
-    const reg = fitRegion();
+    const placeholderOnly = list.length === 1 && list[0] === "placeholder";
+    const reg = fitRegion(placeholderOnly);
     const z = Math.max(0.4, Math.min(1.05, Math.min(reg.w / (x1 - x0), reg.h / (y1 - y0))));
     state.view.z = z;
     state.view.x = reg.cx - ((x0 + x1) / 2) * z;
@@ -1925,10 +2000,11 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   canvas.addEventListener("pointercancel", endDrag);
   canvas.addEventListener("wheel", (e) => { e.preventDefault(); zoomBy(e.deltaY > 0 ? 0.93 : 1.075); }, { passive: false });
 
-  /* Clicking the blank canvas — not a node — clears the selection, which
-     is what sends the reasoning panel back into its collapsed state. */
+  /* Clicking the blank canvas — not a node, and not the floating node
+     menu beside it — clears the selection, which is what sends the
+     reasoning panel back into its collapsed state. */
   canvas.addEventListener("click", (e) => {
-    if (e.target.closest(".node")) return;
+    if (e.target.closest(".node") || e.target.closest("#nodemenu")) return;
     if (state.selected) { state.selected = null; render(); }
   });
 
@@ -1946,7 +2022,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
   function exploreLabel(noun, count, prompt) {
     const base = `Generating ${count} ${noun}${count === 1 ? "" : "s"}…`;
-    return prompt ? `${base.slice(0, -1)} — "${prompt}"…` : base;
+    return prompt ? `${base.slice(0, -1)} for "${prompt}"…` : base;
   }
 
   reason.addEventListener("click", (e) => {
@@ -1999,7 +2075,11 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
     if (!act || act.disabled) return;
     const a = act.dataset.act;
     if (a === "layout") {
-      showToast("Explore layout is a stub in this prototype — concept and copy are fully wired.");
+      showToast("Explore layout is a stub in this prototype. Concept and copy are fully wired.");
+      return;
+    }
+    if (a === "copy" && act.dataset.node === "root") {
+      showToast("Explore concept first. Copy is written for a concept, not the screen itself.");
       return;
     }
     const countEl = nodemenuEl.querySelector("#exploreCount");
@@ -2141,12 +2221,6 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
       if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
       return;
     }
-
-    if (e.target.closest("#setContext")) {
-      if (state.step !== 1) return;
-      state.contextSet = true;
-      advance(); render(); fitTo(["root"]);
-    }
   });
 
   /* Closes an in-place edit back to plain text once the field loses
@@ -2193,10 +2267,16 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   $("#zOut").addEventListener("click", () => zoomBy(1 / 1.15));
   $("#restart").addEventListener("click", reset);
   $("#sheetRestart").addEventListener("click", reset);
+  $("#protoNoteX").addEventListener("click", () => { state.noteDismissed = true; render(); });
+  $("#setContext").addEventListener("click", () => {
+    if (state.step !== 1) return;
+    state.contextSet = true;
+    advance(); render(); fitTo(["root"]);
+  });
 
   function reset() {
     Object.assign(state, {
-      step: 0, placed: false, analyzing: false, contextSet: false, editingField: null,
+      step: 0, placed: false, noteDismissed: false, analyzing: false, contextSet: false, editingField: null,
       form: { ...DEFAULTS, constraints: [...DEFAULTS.constraints] },
       range: "Explore",
       shown: new Set(), pending: new Set(), selected: null, spent: new Set(),
