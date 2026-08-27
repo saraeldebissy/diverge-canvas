@@ -564,7 +564,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
 .frame{
   position:relative;
-  height:200px;
+  height:238px;
   border-radius:var(--r);
   background:var(--ui-bg);
   box-shadow:var(--shadow-frame);
@@ -1128,7 +1128,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 (() => {
   "use strict";
 
-  const W = 280, H = 200, OFF = 400;
+  const W = 280, H = 238, OFF = 400;
 
   /* ==========================================================
      THE DESIGNS
@@ -1142,12 +1142,12 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
 
   const nav = (crumb) => `<div class="ui-nav">‹ ${crumb}<span class="dot"></span></div>`;
 
-  const card = (p, rec) => `
-    <div class="pcard${rec ? " rec" : ""}">
+  const card = (p, rec, compact) => `
+    <div class="pcard${rec ? " rec" : ""}${compact ? " compact" : ""}">
       ${rec ? '<span class="ptag">Recommended</span>' : ""}
       <span class="pname">${p.name}</span>
       <span class="pprice">$${p.price}<s>/mo</s></span>
-      <span class="pfeat">${p.feats.map((f) => `<span>${f}</span>`).join("")}</span>
+      ${compact ? "" : `<span class="pfeat">${p.feats.map((f) => `<span>${f}</span>`).join("")}</span>`}
     </div>`;
 
   const MOCK = {
@@ -1237,7 +1237,7 @@ button{ background:none; border:0; margin:0; padding:0; cursor:pointer; }
   function copyMock(line, cta) {
     return `
       ${nav("Plans")}
-      <div class="ui-plans" style="flex:none;height:64px">${card(PLANS[1], true)}</div>
+      <div class="ui-plans" style="flex:none">${card(PLANS[1], true, true)}</div>
       <div class="ui-copy">${line}</div>
       <div class="ui-cta solid">${cta}</div>`;
   }
